@@ -29,7 +29,7 @@ export function createDataManager(workerUrl) {
       minY: -WORLD_EXTENT * 2,
       maxX: WORLD_EXTENT * 2,
       maxY: WORLD_EXTENT * 2,
-    }, (rectId) => getRectCenter(dataManager, rectId));
+    }, (rectId) => getRectAabb(dataManager, rectId));
 
   return dataManager;
 }
@@ -52,8 +52,10 @@ export function attachDataManagerHandlers(dataManager, handlers) {
         insertRect(
           dataManager.quadtree,
           chunk.startIndex + index,
-          (chunk.aabbs[aabbOffset + 0] + chunk.aabbs[aabbOffset + 2]) * 0.5,
-          (chunk.aabbs[aabbOffset + 1] + chunk.aabbs[aabbOffset + 3]) * 0.5,
+          chunk.aabbs[aabbOffset + 0],
+          chunk.aabbs[aabbOffset + 1],
+          chunk.aabbs[aabbOffset + 2],
+          chunk.aabbs[aabbOffset + 3],
         );
       }
       dataManager.treeBuildMs += performance.now() - buildStart;
@@ -107,14 +109,16 @@ function buildChunkRecord(instanceData, startIndex, chunkIndex) {
   };
 }
 
-function getRectCenter(dataManager, rectId) {
+function getRectAabb(dataManager, rectId) {
   const chunkIndex = dataManager.resolveChunkIndex(rectId);
   const chunk = dataManager.chunks[chunkIndex];
   const localIndex = rectId - chunk.startIndex;
   const aabbOffset = localIndex * 4;
 
   return {
-    x: (chunk.aabbs[aabbOffset + 0] + chunk.aabbs[aabbOffset + 2]) * 0.5,
-    y: (chunk.aabbs[aabbOffset + 1] + chunk.aabbs[aabbOffset + 3]) * 0.5,
+    minX: chunk.aabbs[aabbOffset + 0],
+    minY: chunk.aabbs[aabbOffset + 1],
+    maxX: chunk.aabbs[aabbOffset + 2],
+    maxY: chunk.aabbs[aabbOffset + 3],
   };
 }

@@ -1,4 +1,4 @@
-export const TOTAL_RECT_COUNT = 5_000_000;
+export const TOTAL_RECT_COUNT = 10_000_000;
 export const INITIAL_CHUNK_RECT_COUNT = 32_768;
 export const CHUNK_RECT_COUNT = 131_072;
 export const QUADTREE_SPLIT_THRESHOLD = 100;

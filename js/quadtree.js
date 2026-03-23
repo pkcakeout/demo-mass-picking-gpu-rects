@@ -13,23 +13,22 @@ function createNode(minX, minY, maxX, maxY, depth) {
   };
 }
 
-export function createQuadtree(bounds, getItemCenter) {
+export function createQuadtree(bounds, getItemAabb) {
   return {
     root: createNode(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY, 0),
     itemCount: 0,
-    getItemCenter,
+    getItemAabb,
   };
 }
 
-export function insertRect(quadtree, rectId, centerX, centerY) {
+export function insertRect(quadtree, rectId, minX, minY, maxX, maxY) {
   quadtree.itemCount += 1;
-  insertIntoNode(quadtree, quadtree.root, rectId, centerX, centerY);
+  insertIntoNode(quadtree, quadtree.root, rectId, minX, minY, maxX, maxY);
 }
 
-function insertIntoNode(quadtree, node, rectId, centerX, centerY) {
+function insertIntoNode(quadtree, node, rectId, minX, minY, maxX, maxY) {
   if (node.children !== null) {
-    const child = pickChild(node, centerX, centerY);
-    insertIntoNode(quadtree, child, rectId, centerX, centerY);
+    insertIntoOverlappingChildren(quadtree, node, rectId, minX, minY, maxX, maxY);
     return;
   }
 
@@ -41,9 +40,16 @@ function insertIntoNode(quadtree, node, rectId, centerX, centerY) {
     node.items = [];
     for (let index = 0; index < items.length; index += 1) {
       const itemId = items[index];
-      const itemCenter = quadtree.getItemCenter(itemId);
-      const child = pickChild(node, itemCenter.x, itemCenter.y);
-      insertIntoNode(quadtree, child, itemId, itemCenter.x, itemCenter.y);
+      const itemAabb = quadtree.getItemAabb(itemId);
+      insertIntoOverlappingChildren(
+        quadtree,
+        node,
+        itemId,
+        itemAabb.minX,
+        itemAabb.minY,
+        itemAabb.maxX,
+        itemAabb.maxY,
+      );
     }
   }
 }
@@ -61,12 +67,15 @@ function splitNode(node) {
   ];
 }
 
-function pickChild(node, centerX, centerY) {
-  const midX = (node.minX + node.maxX) * 0.5;
-  const midY = (node.minY + node.maxY) * 0.5;
-  const east = centerX >= midX ? 1 : 0;
-  const north = centerY >= midY ? 0 : 2;
-  return node.children[north + east];
+function insertIntoOverlappingChildren(quadtree, node, rectId, minX, minY, maxX, maxY) {
+  for (let index = 0; index < 4; index += 1) {
+    const child = node.children[index];
+    if (!aabbOverlaps(minX, minY, maxX, maxY, child.minX, child.minY, child.maxX, child.maxY)) {
+      continue;
+    }
+
+    insertIntoNode(quadtree, child, rectId, minX, minY, maxX, maxY);
+  }
 }
 
 export function queryRange(quadtree, range, output) {

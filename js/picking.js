@@ -9,6 +9,7 @@ export function createPickingState() {
     activeSector: null,
     queryMs: 0,
     candidates: [],
+    seenIds: new Set(),
     best: null,
   };
 }
@@ -31,6 +32,7 @@ export function pickRectangle(dataManager, camera, mouseWorldX, mouseWorldY, scr
   };
   scratch.activeSector = findDeepestNodeAtPoint(quadtree, mouseWorldX, mouseWorldY);
   const candidates = queryRange(quadtree, range, scratch.candidates);
+  scratch.seenIds.clear();
   const thresholdSquared = thresholdWorld * thresholdWorld;
 
   let best = null;
@@ -38,6 +40,11 @@ export function pickRectangle(dataManager, camera, mouseWorldX, mouseWorldY, scr
 
   for (let index = 0; index < candidates.length; index += 1) {
     const rectId = candidates[index];
+    if (scratch.seenIds.has(rectId)) {
+      continue;
+    }
+    scratch.seenIds.add(rectId);
+
     const rect = getRectView(dataManager, rectId);
     if (!aabbOverlaps(
       rect.minX - thresholdWorld,
