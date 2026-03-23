@@ -91,3 +91,34 @@ export function queryRange(quadtree, range, output) {
 
   return output;
 }
+
+export function collectLeafNodes(quadtree, output) {
+  output.length = 0;
+  const stack = [quadtree.root];
+
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (node.children === null) {
+      output.push(node);
+      continue;
+    }
+
+    stack.push(node.children[0], node.children[1], node.children[2], node.children[3]);
+  }
+
+  return output;
+}
+
+export function findDeepestNodeAtPoint(quadtree, x, y) {
+  let node = quadtree.root;
+
+  while (node.children !== null) {
+    const midX = (node.minX + node.maxX) * 0.5;
+    const midY = (node.minY + node.maxY) * 0.5;
+    const east = x >= midX ? 1 : 0;
+    const north = y >= midY ? 0 : 2;
+    node = node.children[north + east];
+  }
+
+  return node;
+}

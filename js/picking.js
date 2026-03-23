@@ -1,11 +1,12 @@
 import { PICK_THRESHOLD_PX } from "./config.js";
 import { getWorldPixelSize } from "./camera.js";
 import { aabbOverlaps, pointToRectangleEdgeDistanceSquared } from "./math.js";
-import { queryRange } from "./quadtree.js";
+import { findDeepestNodeAtPoint, queryRange } from "./quadtree.js";
 
 export function createPickingState() {
   return {
     hovered: null,
+    activeSector: null,
     queryMs: 0,
     candidates: [],
     best: null,
@@ -28,6 +29,7 @@ export function pickRectangle(dataManager, camera, mouseWorldX, mouseWorldY, scr
     maxX: mouseWorldX + thresholdWorld,
     maxY: mouseWorldY + thresholdWorld,
   };
+  scratch.activeSector = findDeepestNodeAtPoint(quadtree, mouseWorldX, mouseWorldY);
   const candidates = queryRange(quadtree, range, scratch.candidates);
   const thresholdSquared = thresholdWorld * thresholdWorld;
 

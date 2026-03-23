@@ -65,3 +65,33 @@ void main() {
   outColor = vec4(vColor, alpha);
 }
 `;
+
+export const LINE_VERTEX_SHADER = `#version 300 es
+precision highp float;
+
+layout(location = 0) in vec2 aPosition;
+
+uniform vec2 uCameraCenter;
+uniform vec2 uViewportSize;
+uniform float uZoom;
+
+void main() {
+  vec2 cameraRelative = (aPosition - uCameraCenter) * uZoom;
+  vec2 ndc = vec2(
+    cameraRelative.x / (uViewportSize.x * 0.5),
+    cameraRelative.y / (uViewportSize.y * 0.5)
+  );
+  gl_Position = vec4(ndc, 0.0, 1.0);
+}
+`;
+
+export const LINE_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+
+uniform vec4 uColor;
+out vec4 outColor;
+
+void main() {
+  outColor = uColor;
+}
+`;

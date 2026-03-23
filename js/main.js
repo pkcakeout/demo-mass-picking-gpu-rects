@@ -7,7 +7,15 @@ import { createCamera, panCamera, screenToWorld, updateCameraViewport, zoomCamer
 import { attachDataManagerHandlers, createDataManager, startGeneration } from "./data-manager.js";
 import { createOverlay, renderOverlay } from "./overlay.js";
 import { createPickingState, pickRectangle } from "./picking.js";
-import { addRendererChunk, createRenderer, renderScene, resizeRenderer, updateHoverChunk } from "./renderer.js";
+import {
+  addRendererChunk,
+  createRenderer,
+  rebuildQuadtreeLines,
+  renderScene,
+  resizeRenderer,
+  updateHoverChunk,
+  updateQuadtreeHighlight,
+} from "./renderer.js";
 
 const canvas = document.querySelector("#scene");
 const statsElement = document.querySelector("#stats");
@@ -17,6 +25,7 @@ const overlay = createOverlay(statsElement);
 const pickingState = createPickingState();
 const renderer = createRenderer(canvas);
 const dataManager = createDataManager(new URL("./generator-worker.js", import.meta.url));
+rebuildQuadtreeLines(renderer, dataManager.quadtree);
 
 const state = {
   fps: 0,
@@ -35,6 +44,7 @@ let lastPointerY = 0;
 attachDataManagerHandlers(dataManager, {
   onChunk: ({ data }) => {
     addRendererChunk(renderer, data);
+    rebuildQuadtreeLines(renderer, dataManager.quadtree);
     if (dataManager.totalChunks < dataManager.loadedChunks) {
       dataManager.totalChunks = dataManager.loadedChunks;
     }
@@ -77,6 +87,7 @@ canvas.addEventListener("pointermove", (event) => {
   const cssY = event.clientY - rect.top;
   const world = screenToWorld(camera, cssX, cssY);
   const hovered = pickRectangle(dataManager, camera, world.x, world.y, pickingState);
+  updateQuadtreeHighlight(renderer, pickingState.activeSector);
   state.hoveredId = hovered?.id ?? null;
   updateHoverChunk(renderer, hovered);
 });
@@ -93,7 +104,9 @@ canvas.addEventListener("pointerleave", () => {
   if (!isDragging) {
     state.hoveredId = null;
     pickingState.hovered = null;
+    pickingState.activeSector = null;
     updateHoverChunk(renderer, null);
+    updateQuadtreeHighlight(renderer, null);
   }
 });
 
